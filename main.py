@@ -1,14 +1,15 @@
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QAbstractButton
-from PyQt5.QtGui import QPainter, QPen, QBrush, QMouseEvent
-from PyQt5.QtCore import Qt, QSize, QTimer, QEvent
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton
+from PyQt5.QtGui import QPainter, QPen, QBrush
+from PyQt5.QtCore import Qt, QSize, QTimer
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.widthApp, self.heightApp  = 800, 600
+        self.widthApp = 800
+        self.heightApp = 600
 
         self.border = 5
         self.button_border = self.border + 35
@@ -118,14 +119,12 @@ class MainWindow(QMainWindow):
                      (self.down_draw + self.up_draw) / 2]
         self.pivot_points.append(new_point)
         self.bezier_points = self.get_bezier_points()
-        self.update()
 
 
     def click_delete_point(self):
         if len(self.pivot_points) > 2:
             self.pivot_points.pop(len(self.pivot_points) - 1)
             self.bezier_points = self.get_bezier_points()
-            self.update()
 
 
     def click_pause(self):
@@ -144,11 +143,13 @@ class MainWindow(QMainWindow):
         painter = QPainter(self)
         painter.begin(self)
 
+        # draw white board
         painter.setPen(QPen(Qt.black, 5, Qt.SolidLine))
         painter.setBrush(QBrush(Qt.white))
         painter.drawRect(self.left_draw, self.up_draw, self.right_draw - self.left_draw, self.down_draw - self.up_draw)
 
-        painter.setPen(QPen(Qt.black, 1, Qt.SolidLine))
+        # draw lines
+        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
         buffer_points = self.pivot_points
         while len(buffer_points) != 1:
             next_points = []
@@ -158,13 +159,16 @@ class MainWindow(QMainWindow):
                 painter.drawLine(int(buffer_points[i][0] + self.radius), int(buffer_points[i][1] + self.radius),
                                  int(buffer_points[i + 1][0] + self.radius), int(buffer_points[i + 1][1] + self.radius))
                 next_points.append(point)
+            painter.setPen(QPen(Qt.black, 1, Qt.SolidLine))
             buffer_points = next_points
 
-        painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+        # draw bezier curve
+        painter.setPen(QPen(Qt.black, 3, Qt.SolidLine))
         for i in range(0, len(self.bezier_points) - 1):
             painter.drawLine(int(self.bezier_points[i][0] + self.radius), int(self.bezier_points[i][1] + self.radius),
                              int(self.bezier_points[i + 1][0] + self.radius), int(self.bezier_points[i + 1][1] + self.radius))
 
+        # draw points for bezier curve constuction
         painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
         painter.setBrush(QBrush(Qt.blue))
         buffer_points = self.pivot_points
@@ -173,10 +177,13 @@ class MainWindow(QMainWindow):
             for i in range(0, len(buffer_points) - 1):
                 point = [buffer_points[i][0] + self.par * (buffer_points[i + 1][0] - buffer_points[i][0]),
                          buffer_points[i][1] + self.par * (buffer_points[i + 1][1] - buffer_points[i][1])]
-                painter.drawEllipse(int(point[0]), int(point[1]), 2 * self.radius, 2 * self.radius)
                 next_points.append(point)
+                if len(buffer_points) == 2:
+                    painter.setBrush(QBrush(Qt.red))
+                painter.drawEllipse(int(point[0]), int(point[1]), 2 * self.radius, 2 * self.radius)
             buffer_points = next_points
 
+        # draw pivot points
         painter.setBrush(QBrush(Qt.green))
         for point in self.pivot_points:
             painter.drawEllipse(int(point[0]), int(point[1]), 2 * self.radius, 2 * self.radius)
